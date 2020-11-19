@@ -1,18 +1,19 @@
 name: pusher_websocket
 description: A starting point for Dart libraries or applications.
-version: 0.0.1
-# homepage: https://www.example.com
+version: 0.0.1+1
+homepage: https://github.com/amondnet/pusher.dart
 
 environment:
   sdk: '>=2.10.0 <3.0.0'
 
 dependencies:
-  quiver: any
-  synchronized: any
-  logging: any
+  quiver: ^2.0.0
+  synchronized: ^2.0.0
+  logging: ^0.11.0
   web_socket_channel: ^1.1.0
-  retry: ^3.0.1
-  http: any
+  retry: ^3.0.0
+  http: ^0.12.0
+  meta: ^1.2.0
 #  path: ^1.7.0
 
 dev_dependencies:
