@@ -1,0 +1,57 @@
+name: Test and coverage
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  title:
+    name: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        #package: [ "timber", "timber_crashlytics", "timber_firebase_analytics", "timber_mixpanel", "timber_sentry" ]
+        version: [ "latest" ]
+    container: google/dart:${{ matrix.version }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache Flutter
+        id: cache-flutter
+        uses: actions/cache@v2
+        with:
+          path: /opt/hostedtoolcache/flutter
+          key: ${{ runner.os }}-flutter-install-cache-${{ matrix.version }}
+
+      #- uses: stelynx/dart-full-coverage@fe62071
+      #  with:
+      #    use_git_root: false
+      #    main_dir: ${{ matrix.package }}
+      #    package: ${{ matrix.package }}
+      - name: Install dependencies
+        working-directory: ${{ matrix.package }}
+        run: |
+          pub get
+        #  pub global activate remove_from_coverage
+        #  pub global activate junitreport
+      - name: Run tests
+        working-directory: ${{ matrix.package }}
+        run: |
+          pub run test_coverage --exclude test/channel/private_channel_impl_test.dart --print-test-output --badge false
+        #pub global run remove_from_coverage -f coverage/lcov.info -r '.freezed.dart$'
+      #- name: Publish Test Report
+      #  uses: mikepenz/action-junit-report@v1
+      #  with:
+      #    report_paths: ${{ matrix.package }}/TEST-report.xml
+      #    github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload coverage to codecov
+        uses: codecov/codecov-action@v1
+        if: ${{ matrix.version == 'latest' }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage/lcov.info
