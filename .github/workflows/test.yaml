@@ -22,8 +22,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Dart Full Coverage
-        uses: stelynx/dart-full-coverage@v1.0.3
+      #- name: Dart Full Coverage
+      #  uses: stelynx/dart-full-coverage@v1.0.3
 
       - name: Install dependencies
         working-directory: ${{ matrix.package }}
