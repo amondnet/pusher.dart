@@ -36,8 +36,8 @@ jobs:
         working-directory: ${{ matrix.package }}
         run: |
           pub run test_coverage --exclude test/channel/private_channel_impl_test.dart --print-test-output --badge false
-          pub run test test/.test_coverage.dart --reporter json | tojunit > TEST-report.xml
-        # pub global run junitreport:tojunit --input example.jsonl --output TEST-report.xml
+          pub run test test/.test_coverage.dart --reporter json > example.jsonl
+          pub global run junitreport:tojunit --input example.jsonl --output TEST-report.xml
         #pub global run remove_from_coverage -f coverage/lcov.info -r '.freezed.dart$'
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v1
