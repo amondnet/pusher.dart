@@ -11,7 +11,7 @@ import 'package:synchronized/extension.dart';
 class Factory {
   final eventLock = Lock();
 
-  void queueOnEventThread(final Function() r) async {
+  Future<void> queueOnEventThread(final Function() r) async {
     return synchronized(() async {
       scheduleMicrotask(() => r.call());
     });

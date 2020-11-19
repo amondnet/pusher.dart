@@ -29,7 +29,7 @@ abstract class Channel {
   ///             {@link com.pusher.client.Pusher#subscribe(String)} or
   ///             {@link com.pusher.client.Pusher#subscribe(String, ChannelEventListener, String...)}
   ///             again to receive a fresh {@linkplain Channel} instance.
-  void bind(String eventName, SubscriptionEventListener listener);
+  Future<void> bind(String eventName, SubscriptionEventListener listener);
 
   /// <p>
   /// Unbinds a previously bound {@link SubscriptionEventListener} from an
@@ -63,7 +63,7 @@ abstract class Channel {
   ///             {@link com.pusher.client.Pusher#subscribe(String)} or
   ///             {@link com.pusher.client.Pusher#subscribe(String, ChannelEventListener, String...)}
   ///             again to receive a fresh {@linkplain Channel} instance.
-  void unbind(String eventName, SubscriptionEventListener listener);
+  Future<void> unbind(String eventName, SubscriptionEventListener listener);
 
   ///
   /// @return Whether or not the channel is subscribed.
