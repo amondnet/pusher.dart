@@ -23,10 +23,7 @@ class PrivateChannelImplTest extends ChannelImplTest {
   /* end of tests */
 
   @override
-  ChannelImpl newInstance(final String channelName) {
-    return PrivateChannelImpl(
-        mockConnection, channelName, mockAuthorizer, factory);
-  }
+  ChannelImpl newInstance(final String channelName) {}
 
   @override
   String get channelName {
