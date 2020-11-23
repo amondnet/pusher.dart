@@ -10,6 +10,6 @@ void main() {
   Logger.root.onRecord.listen((event) {
     print(event.message);
   });
-  channel.main();
-  private_channel.main();
+  //channel.main();
+  //private_channel.main();
 }

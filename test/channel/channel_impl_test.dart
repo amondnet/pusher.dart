@@ -44,9 +44,9 @@ class ChannelImplTest {
   }
 
   void testReturnsCorrectSubscribeMessage() {
-    test('should returns correct subscribe message', () {
+    test('should returns correct subscribe message', () async {
       expect(
-          channel.toSubscribeMessage(),
+          await channel.toSubscribeMessage(),
           '{\"event\":\"pusher:subscribe\",\"data\":{\"channel\":\"' +
               channelName +
               '\"}}');
