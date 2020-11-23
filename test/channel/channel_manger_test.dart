@@ -236,4 +236,6 @@ void main() {
     //TODO(amond) : called 2?
     verify(mockConnection.sendMessage(OUTGOING_SUBSCRIBE_MESSAGE)).called(1);
   });
+
+  // TODO(Amond) : test
 }
