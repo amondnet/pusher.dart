@@ -6,6 +6,8 @@ import 'package:pusher_websocket/src/connection/connection_state.dart';
 import 'package:pusher_websocket/src/connection/connection_state_change.dart';
 import 'package:pusher_websocket/src/connection/impl/internal_connection.dart';
 import 'package:pusher_websocket/src/util/factory.dart';
+import 'package:quiver/check.dart';
+import 'package:synchronized/synchronized.dart';
 
 import '../channel.dart';
 import '../channel_event_listner.dart';
@@ -14,11 +16,11 @@ import '../presence_channel.dart';
 import '../private_channel.dart';
 import '../private_channel_event_listener.dart';
 import '../private_encrypted_channel.dart';
-import 'internal_channle.dart';
+import 'internal_channel.dart';
 
 class ChannelManager implements ConnectionEventListener {
   final Factory factory;
-
+  final _lock = Lock();
   // TODO(amond): concurrent
   final Map<String, InternalChannel> channelNameToChannelMap =
       <String, InternalChannel>{};
@@ -75,29 +77,32 @@ class ChannelManager implements ConnectionEventListener {
       _connection.unbind(ConnectionState.CONNECTED, this);
     }
 
-    this.connection = connection;
+    _connection = connection;
     connection.bind(ConnectionState.CONNECTED, this);
   }
 
-  void subscribeTo(final InternalChannel channel,
-      final ChannelEventListener listener, final Iterable<String> eventNames) {
-    _validateArgumentsAndBindEvents(channel, listener, eventNames);
-    channelNameToChannelMap[channel.name] = channel;
-    _sendOrQueueSubscribeMessage(channel);
+  Future<void> subscribeTo(
+      final InternalChannel channel, final ChannelEventListener listener,
+      [final Iterable<String> eventNames = const []]) async {
+    await _validateArgumentsAndBindEvents(channel, listener, eventNames);
+    await _lock
+        .synchronized(() => channelNameToChannelMap[channel.name] = channel);
+    await _sendOrQueueSubscribeMessage(channel);
   }
 
-  void unsubscribeFrom(final String channelName) {
+  void unsubscribeFrom(final String channelName) async {
     if (channelName == null) {
       throw ArgumentError('Cannot unsubscribe from null channel');
     }
-
-    final channel = channelNameToChannelMap.remove(channelName);
-    if (channel == null) {
-      return;
-    }
-    if (_connection.state == ConnectionState.CONNECTED) {
-      _sendUnsubscribeMessage(channel);
-    }
+    await _lock.synchronized(() {
+      final channel = channelNameToChannelMap.remove(channelName);
+      if (channel == null) {
+        return;
+      }
+      if (_connection.state == ConnectionState.CONNECTED) {
+        _sendUnsubscribeMessage(channel);
+      }
+    });
   }
 
   void onMessage(final String event, final String wholeMessage) {
@@ -105,12 +110,14 @@ class ChannelManager implements ConnectionEventListener {
     final channelNameObject = json['channel'];
 
     if (channelNameObject != null) {
-      final channelName = channelNameObject as String;
-      final channel = channelNameToChannelMap[channelName];
+      _lock.synchronized(() {
+        final channelName = channelNameObject as String;
+        final channel = channelNameToChannelMap[channelName];
 
-      if (channel != null) {
-        channel.onMessage(event, wholeMessage);
-      }
+        if (channel != null) {
+          channel.onMessage(event, wholeMessage);
+        }
+      });
     }
   }
 
@@ -119,9 +126,11 @@ class ChannelManager implements ConnectionEventListener {
   @override
   void onConnectionStateChange(ConnectionStateChange change) {
     if (change.getCurrentState() == ConnectionState.CONNECTED) {
-      for (final channel in channelNameToChannelMap.values) {
-        _sendOrQueueSubscribeMessage(channel);
-      }
+      _lock.synchronized(() {
+        for (final channel in channelNameToChannelMap.values) {
+          _sendOrQueueSubscribeMessage(channel);
+        }
+      });
     }
   }
 
@@ -155,13 +164,14 @@ class ChannelManager implements ConnectionEventListener {
     });
   }
 
-  void _handleAuthenticationFailure(
-      final InternalChannel channel, final AuthorizationFailureException e) {
-    channelNameToChannelMap.remove(channel.name);
+  void _handleAuthenticationFailure(final InternalChannel channel,
+      final AuthorizationFailureException e) async {
+    await _lock
+        .synchronized(() => channelNameToChannelMap.remove(channel.name));
     channel.updateState(ChannelState.FAILED);
 
     if (channel.eventListener != null) {
-      factory.queueOnEventThread(() {
+      await factory.queueOnEventThread(() {
         // Note: this cast is safe because an
         // AuthorizationFailureException will never be thrown
         // when subscribing to a non-private channel
@@ -173,19 +183,16 @@ class ChannelManager implements ConnectionEventListener {
     }
   }
 
-  void _validateArgumentsAndBindEvents(final InternalChannel channel,
-      final ChannelEventListener listener, final Iterable<String> eventNames) {
-    if (channel == null) {
-      throw ArgumentError('Cannot subscribe to a null channel');
-    }
-
-    if (channelNameToChannelMap.containsKey(channel.name)) {
-      throw ArgumentError(
-          'Already subscribed to a channel with name ' + channel.name);
-    }
+  Future<void> _validateArgumentsAndBindEvents(
+      final InternalChannel channel, final ChannelEventListener listener,
+      [final Iterable<String> eventNames = const []]) async {
+    checkArgument(channel != null,
+        message: 'Cannot subscribe to a null channel');
+    checkArgument(!channelNameToChannelMap.containsKey(channel.name),
+        message: 'Already subscribed to a channel with name ${channel.name}');
 
     for (final eventName in eventNames) {
-      channel.bind(eventName, listener);
+      await channel.bind(eventName, listener);
     }
 
     channel.eventListener = listener;

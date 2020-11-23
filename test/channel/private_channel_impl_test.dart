@@ -9,6 +9,7 @@ import 'package:pusher_websocket/src/connection/connection_state.dart';
 import 'package:pusher_websocket/src/connection/impl/internal_connection.dart';
 import 'package:test/test.dart';
 
+import '../mocks.dart';
 import 'channel_impl_test.dart';
 
 class PrivateChannelImplTest extends ChannelImplTest {

@@ -7,6 +7,8 @@ import 'package:pusher_websocket/src/channel/pusher_event.dart';
 import 'package:pusher_websocket/src/util/factory.dart';
 import 'package:test/test.dart';
 
+import '../mocks.dart';
+
 void main() {
   ChannelImplTest().testMain();
 }
@@ -242,7 +244,3 @@ class ChannelImplTest {
     return listener;
   }
 }
-
-class MockChannelEventListener extends Mock implements ChannelEventListener {}
-
-class MockFactory extends Mock implements Factory {}

@@ -10,7 +10,7 @@ import '../channel_event_listner.dart';
 import '../channel_state.dart';
 import '../pusher_event.dart';
 import '../subscription_event_listener.dart';
-import 'internal_channle.dart';
+import 'internal_channel.dart';
 
 final _logger = Logger('ChannelImpl');
 
