@@ -117,7 +117,7 @@ class ChannelImpl implements InternalChannel {
   }
 
   @override
-  String toSubscribeMessage() {
+  Future<String> toSubscribeMessage() async {
     final jsonObject = <Object, Object>{};
     jsonObject['event'] = 'pusher:subscribe';
 

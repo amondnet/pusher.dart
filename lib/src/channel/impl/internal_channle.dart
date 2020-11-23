@@ -5,7 +5,7 @@ import '../pusher_event.dart';
 
 abstract class InternalChannel extends Channel
     implements Comparable<InternalChannel> {
-  String toSubscribeMessage();
+  Future<String> toSubscribeMessage();
 
   String toUnsubscribeMessage();
 

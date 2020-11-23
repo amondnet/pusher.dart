@@ -1,12 +1,11 @@
 import 'package:meta/meta.dart';
 import 'package:mockito/mockito.dart';
+import 'package:pusher_websocket/src/channel/channel_event_listner.dart';
+import 'package:pusher_websocket/src/channel/channel_state.dart';
+import 'package:pusher_websocket/src/channel/impl/channel_impl.dart';
+import 'package:pusher_websocket/src/channel/pusher_event.dart';
+import 'package:pusher_websocket/src/util/factory.dart';
 import 'package:test/test.dart';
-
-import '../../lib/src/channel/channel_event_listner.dart';
-import '../../lib/src/channel/channel_state.dart';
-import '../../lib/src/channel/impl/channel_impl.dart';
-import '../../lib/src/channel/pusher_event.dart';
-import '../../lib/src/util/factory.dart';
 
 void main() {
   ChannelImplTest().testMain();
@@ -18,6 +17,41 @@ class ChannelImplTest {
   ChannelEventListener mockListener;
   Factory mockFactory;
   ChannelImpl channel;
+
+  void testPublicChannelName() {
+    test('public channel name', () {
+      newInstance('my-channel');
+    });
+  }
+
+  void testPresenceChannelName() {
+    test('Presence Channel Name', () {
+      expect(() => newInstance('presence-my-channel'), throwsArgumentError);
+    });
+  }
+
+  void testPrivateEncryptedChannelName() {
+    test('Private Encrypted Channel Name', () {
+      expect(() => newInstance('private-encrypted-my-channel'),
+          throwsArgumentError);
+    });
+  }
+
+  void testPrivateChannelName() {
+    test('private channel name', () {
+      expect(() => newInstance('private-my-channel'), throwsArgumentError);
+    });
+  }
+
+  void testReturnsCorrectSubscribeMessage() {
+    test('should returns correct subscribe message', () {
+      expect(
+          channel.toSubscribeMessage(),
+          '{\"event\":\"pusher:subscribe\",\"data\":{\"channel\":\"' +
+              channelName +
+              '\"}}');
+    });
+  }
 
   @mustCallSuper
   void testMain() {
@@ -38,33 +72,14 @@ class ChannelImplTest {
       expect(() => newInstance(null), throwsArgumentError);
     });
 
-    test('private channel name', () {
-      expect(() => newInstance('private-my-channel'), throwsArgumentError);
-    });
-
-    test('Private Encrypted Channel Name', () {
-      expect(() => newInstance('private-encrypted-my-channel'),
-          throwsArgumentError);
-    });
-
-    test('Presence Channel Name', () {
-      expect(() => newInstance('presence-my-channel'), throwsArgumentError);
-    });
-
-    test('public channel name', () {
-      newInstance('my-channel');
-    });
+    testPublicChannelName();
+    testPresenceChannelName();
+    testPrivateEncryptedChannelName();
+    testPrivateChannelName();
+    testReturnsCorrectSubscribeMessage();
 
     test('get name returns name', () {
       expect(channelName, channel.name);
-    });
-
-    test('should returns correct subscribe message', () {
-      expect(
-          channel.toSubscribeMessage(),
-          '{\"event\":\"pusher:subscribe\",\"data\":{\"channel\":\"' +
-              channelName +
-              '\"}}');
     });
 
     test('should returns correct unsubscribe message', () {

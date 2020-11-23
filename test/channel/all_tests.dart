@@ -11,5 +11,5 @@ void main() {
     print(event.message);
   });
   channel.main();
-  //private_channel.main();
+  private_channel.main();
 }

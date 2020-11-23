@@ -133,10 +133,10 @@ class ChannelManager implements ConnectionEventListener {
   /* implementation detail */
 
   void _sendOrQueueSubscribeMessage(final InternalChannel channel) {
-    factory.queueOnEventThread(() {
+    factory.queueOnEventThread(() async {
       if (_connection.state == ConnectionState.CONNECTED) {
         try {
-          final message = channel.toSubscribeMessage();
+          final message = await channel.toSubscribeMessage();
           _connection.sendMessage(message);
           channel.updateState(ChannelState.SUBSCRIBE_SENT);
         } catch (e) {
