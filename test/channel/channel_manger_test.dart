@@ -237,5 +237,84 @@ void main() {
     verify(mockConnection.sendMessage(OUTGOING_SUBSCRIBE_MESSAGE)).called(1);
   });
 
+  test(
+      'testDelayedSubscriptionDoesNotUpdateChannelStateToSubscribeSentUntilConnectedCallbackIsReceived',
+      () async {
+    when(mockConnection.state).thenReturn(ConnectionState.DISCONNECTED);
+
+    await channelManager.subscribeTo(mockInternalChannel, mockEventListener);
+    verifyNever(mockInternalChannel.updateState(any));
+
+    when(mockConnection.state).thenReturn(ConnectionState.CONNECTED);
+    channelManager.onConnectionStateChange(ConnectionStateChange(
+        ConnectionState.CONNECTING, ConnectionState.CONNECTED));
+    verify(mockInternalChannel.updateState(ChannelState.SUBSCRIBE_SENT));
+  });
+
+  test('testReceiveMessageForSubscribedChannelPassesItToChannel', () async {
+    await channelManager
+        .subscribeTo(mockInternalChannel, mockEventListener, ['my-event']);
+    channelManager.onMessage(
+        'my-event',
+        '{\"event\":\"my-event\",\"data\":{\"fish\":\"chips\"},\"channel\":\"' +
+            CHANNEL_NAME +
+            '\"}');
+
+    verify(mockInternalChannel.onMessage(
+        'my-event',
+        '{\"event\":\"my-event\",\"data\":{\"fish\":\"chips\"},\"channel\":\"' +
+            CHANNEL_NAME +
+            '\"}'));
+  });
+
+  test(
+      'testReceiveMessageWithNoMatchingChannelIsIgnoredAndDoesNotThrowException',
+      () async {
+    await channelManager
+        .subscribeTo(mockInternalChannel, mockEventListener, ['my-event']);
+    await channelManager.onMessage(
+        'my-event',
+        '{\"event\":\"my-event\",\"data\":{\"fish\":\"chips\"},\"channel\":\"'
+            'DIFFERENT_CHANNEL_NAME'
+            '\"}');
+
+    verifyNever(mockInternalChannel.onMessage(any, any));
+  });
+
+  test('testReceiveMessageWithNoChannelIsIgnoredAndDoesNotThrowException',
+      () async {
+    channelManager.onMessage('connection_established',
+        '{\"event\":\"connection_established\",\"data\":{\"socket_id\":\"21098.967780\"}}');
+  });
+
+  test('testUnsubscribeFromSubscribedChannelSendsUnsubscribeMessage', () async {
+    await channelManager.subscribeTo(mockInternalChannel, mockEventListener);
+    channelManager.unsubscribeFrom(CHANNEL_NAME);
+
+    verify(mockConnection.sendMessage(OUTGOING_UNSUBSCRIBE_MESSAGE));
+    expect(mockInternalChannel.isSubscribed, false);
+  });
+
+  test('testUnsubscribeFromSubscribedChannelUnsubscribesInEventQueue',
+      () async {
+    await subscriptionTestChannelManager.subscribeTo(
+        mockInternalChannel, mockEventListener);
+    subscriptionTestChannelManager.unsubscribeFrom(CHANNEL_NAME);
+
+    verify(subscriptionTestFactory.queueOnEventThread(any));
+  });
+
+  test('testUnsubscribeFromSubscribedChannelSetsStatusOfChannelToUnsubscribed',
+      () async {
+    await channelManager.subscribeTo(mockInternalChannel, mockEventListener);
+    channelManager.unsubscribeFrom(CHANNEL_NAME);
+
+    verify(mockInternalChannel.updateState(ChannelState.UNSUBSCRIBED));
+  });
+
+  test('testUnsubscribeWithNullChannelNameThrowsException', () async {
+    expect(() => channelManager.unsubscribeFrom(null), throwsArgumentError);
+  });
+
   // TODO(Amond) : test
 }
