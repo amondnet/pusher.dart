@@ -10,7 +10,9 @@ import 'package:test/test.dart';
 import '../mocks.dart';
 
 void main() {
-  ChannelImplTest().testMain();
+  final t = ChannelImplTest();
+  t.testSetUp();
+  t.testMain();
 }
 
 class ChannelImplTest {
@@ -19,6 +21,10 @@ class ChannelImplTest {
   ChannelEventListener mockListener;
   Factory mockFactory;
   ChannelImpl channel;
+
+  ChannelImplTest() {
+    setUp(testSetUp);
+  }
 
   void testPublicChannelName() {
     test('public channel name', () {
@@ -55,43 +61,22 @@ class ChannelImplTest {
     });
   }
 
-  @mustCallSuper
-  void testMain() {
-    setUp(() {
-      mockFactory = MockFactory();
-
-      when(mockFactory.queueOnEventThread(any)).thenAnswer((r) {
-        Function f = r.positionalArguments[0];
-        f.call();
-        return;
-      });
-      mockListener = getEventListener();
-      channel = newInstance(channelName);
-      channel.eventListener = mockListener;
-    });
-
-    test('null channel name throws exception', () {
-      expect(() => newInstance(null), throwsArgumentError);
-    });
-
-    testPublicChannelName();
-    testPresenceChannelName();
-    testPrivateEncryptedChannelName();
-    testPrivateChannelName();
-    testReturnsCorrectSubscribeMessage();
-
-    test('get name returns name', () {
-      expect(channelName, channel.name);
-    });
-
-    test('should returns correct unsubscribe message', () {
-      expect(
-          channel.toUnsubscribeMessage(),
-          '{\"event\":\"pusher:unsubscribe\",\"data\":{\"channel\":\"' +
+  void testIsSubscribedMethod() {
+    test('is subscribed method', () {
+      expect(channel.isSubscribed, isFalse);
+      channel.bind(EVENT_NAME, mockListener);
+      channel.onMessage(
+          'pusher_internal:subscription_succeeded',
+          '{\"event\":\"pusher_internal:subscription_succeeded\",\"data\":\"{}\",\"channel\":\"' +
               channelName +
-              '\"}}');
-    });
+              '\"}');
 
+      expect(channel.isSubscribed, isTrue);
+    });
+  }
+
+  void
+      testInternalSubscriptionSucceededMessageIsTranslatedToASubscriptionSuccessfulCallback() {
     test(
         'Internal Subscription Succeeded Message Is Translated To A Subscription Successful Callback',
         () {
@@ -104,17 +89,45 @@ class ChannelImplTest {
 
       verify(mockListener.onSubscriptionSucceeded(channelName)).called(1);
     });
+  }
 
-    test('is subscribed method', () {
-      expect(channel.isSubscribed, isFalse);
-      channel.bind(EVENT_NAME, mockListener);
-      channel.onMessage(
-          'pusher_internal:subscription_succeeded',
-          '{\"event\":\"pusher_internal:subscription_succeeded\",\"data\":\"{}\",\"channel\":\"' +
+  @mustCallSuper
+  void testSetUp() {
+    mockFactory = MockFactory();
+
+    when(mockFactory.queueOnEventThread(any)).thenAnswer((r) {
+      Function f = r.positionalArguments[0];
+      f.call();
+      return;
+    });
+    mockListener = getEventListener();
+    channel = newInstance(channelName);
+    channel.eventListener = mockListener;
+  }
+
+  @mustCallSuper
+  void testMain() {
+    test('null channel name throws exception', () {
+      expect(() => newInstance(null), throwsArgumentError);
+    });
+
+    testPublicChannelName();
+    testPresenceChannelName();
+    testPrivateEncryptedChannelName();
+    testPrivateChannelName();
+    testReturnsCorrectSubscribeMessage();
+    testIsSubscribedMethod();
+    testInternalSubscriptionSucceededMessageIsTranslatedToASubscriptionSuccessfulCallback();
+    test('get name returns name', () {
+      expect(channelName, channel.name);
+    });
+
+    test('should returns correct unsubscribe message', () {
+      expect(
+          channel.toUnsubscribeMessage(),
+          '{\"event\":\"pusher:unsubscribe\",\"data\":{\"channel\":\"' +
               channelName +
-              '\"}');
-
-      expect(channel.isSubscribed, isTrue);
+              '\"}}');
     });
 
     test('Data Is Extracted From Message And Passed To Single Listener',

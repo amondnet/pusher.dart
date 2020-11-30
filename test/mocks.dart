@@ -1,4 +1,5 @@
 import 'package:mockito/mockito.dart';
+import 'package:pusher_websocket/src/authorizer.dart';
 import 'package:pusher_websocket/src/channel/channel_event_listner.dart';
 import 'package:pusher_websocket/src/channel/impl/internal_channel.dart';
 import 'package:pusher_websocket/src/channel/impl/presence_channel_impl.dart';
@@ -25,3 +26,7 @@ class MockPresenceChannelImpl extends Mock implements PresenceChannelImpl {}
 
 class MockPresenceChannelEventListener extends Mock
     implements PresenceChannelEventListener {}
+
+class MockConnection extends Mock implements InternalConnection {}
+
+class MockAuthorizer extends Mock implements Authorizer {}

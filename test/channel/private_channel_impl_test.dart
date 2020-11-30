@@ -1,3 +1,4 @@
+import 'package:meta/meta.dart';
 import 'package:mockito/mockito.dart';
 import 'package:pusher_websocket/src/authorizer.dart';
 import 'package:pusher_websocket/src/channel/channel_event_listner.dart';
@@ -22,15 +23,21 @@ class PrivateChannelImplTest extends ChannelImplTest {
   static final String AUTH_RESPONSE_WITH_CHANNEL_DATA =
       '\"auth\":\"a87fe72c6f36272aa4b1:41dce43734b18bb\",\"channel_data\":\"{\\\"user_id\\\":\\\"51169fc47abac\\\"}\"';
 
+  PrivateChannelImplTest() {
+    setUp(testSetUp);
+  }
+
+  @override
+  void testSetUp() {
+    super.testSetUp();
+    mockAuthorizer = MockAuthorizer();
+    when(mockAuthorizer.authorize(channelName, any))
+        .thenAnswer((_) => Future.value('{$AUTH_RESPONSE}'));
+    mockConnection = MockConnection();
+  }
+
   @override
   void testMain() {
-    setUp(() {
-      mockAuthorizer = MockAuthorizer();
-      when(mockAuthorizer.authorize(channelName, any))
-          .thenAnswer((_) => Future.value('{$AUTH_RESPONSE}'));
-      mockConnection = MockConnection();
-    });
-
     super.testMain();
 
     test('Construct With Non Private Channel Name Throws Exception', () {
@@ -286,12 +293,6 @@ class PrivateChannelImplTest extends ChannelImplTest {
 }
 
 void main() {
-  PrivateChannelImplTest().testMain();
+  final t = PrivateChannelImplTest();
+  t.testMain();
 }
-
-class MockConnection extends Mock implements InternalConnection {}
-
-class MockPrivateChannelEventListener extends Mock
-    implements PrivateChannelEventListener {}
-
-class MockAuthorizer extends Mock implements Authorizer {}
